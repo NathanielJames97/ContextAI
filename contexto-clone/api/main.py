@@ -1,6 +1,21 @@
 from fastapi import FastAPI
 import json
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Allow requests from any frontend (for testing)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change "*" to frontend URL in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
 app = FastAPI()
 
 # Load precomputed rankings
