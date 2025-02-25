@@ -11,14 +11,16 @@ function App() {
   const checkWord = async () => {
     if (!guess.trim()) return;
     setLoading(true);
-    
+  
     try {
       const res = await axios.get(`https://contextai-production-8a5a.up.railway.app/check/${guess}`);
       setResponse(res.data);
   
-      // Add the new guess to the leaderboard
+      // ✅ Add new guess and sort leaderboard dynamically by rank (most relevant first)
       if (res.data.rank > 0) {
-        setLeaderboard((prev) => [...prev, res.data].slice(-10)); // Keep only last 10 guesses
+        setLeaderboard((prev) =>
+          [...prev, res.data].sort((a, b) => a.rank - b.rank).slice(0, 10) // Keeps best 10 guesses, sorted
+        );
       }
     } catch (error) {
       console.error("Error fetching data:", error);
