@@ -62,7 +62,7 @@ function App() {
   onChange={(e) => setGuess(e.target.value)}
   onKeyDown={(e) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // ✅ Prevent unexpected behavior
+      e.preventDefault(); // ✅ Prevent unintended behavior when clearing input
       checkWord();
     }
   }}
@@ -70,6 +70,7 @@ function App() {
   className="w-full p-3 text-black text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
   whileFocus={{ scale: 1.05 }}
 />
+
 
 
         <motion.button
