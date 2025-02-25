@@ -23,7 +23,7 @@ def rank_words(secret_word, word_list):
     return {word: rank+1 for rank, (word, _) in enumerate(sorted_words)}
 
 if __name__ == "__main__":
-    secret_word = "infinite"  # Replace with dynamic daily selection logic
+    secret_word = "Server"  # Replace with dynamic daily selection logic
     word_list = load_word_list()
 
     ranked_dict = rank_words(secret_word, word_list)
