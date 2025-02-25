@@ -52,14 +52,16 @@ function App() {
 
       {/* Game Panel */}
       <div className="bg-gray-900 p-8 rounded-lg shadow-lg max-w-lg text-center">
-        <motion.input
-          type="text"
-          value={guess}
-          onChange={(e) => setGuess(e.target.value)}
-          placeholder="Enter a word..."
-          className="w-full p-3 text-black text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          whileFocus={{ scale: 1.05 }}
-        />
+      <motion.input
+      type="text"
+      value={guess}
+      onChange={(e) => setGuess(e.target.value)}
+      onKeyDown={(e) => e.key === "Enter" && checkWord()} // ✅ Triggers checkWord on Enter key
+      placeholder="Enter a word..."
+      className="w-full p-3 text-black text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+      whileFocus={{ scale: 1.05 }}
+/>
+
 
         <motion.button
           onClick={checkWord}
