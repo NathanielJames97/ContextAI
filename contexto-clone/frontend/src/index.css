@@ -1,8 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* Custom styling */
+/* 🎮 Game Background */
 body {
-  @apply bg-gray-100 text-gray-900 flex justify-center items-center h-screen;
+  @apply bg-gradient-to-br from-purple-900 via-blue-800 to-indigo-900 text-white flex items-center justify-center min-h-screen;
 }
