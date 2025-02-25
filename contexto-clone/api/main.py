@@ -7,7 +7,7 @@ app = FastAPI()  # ✅ Only one instance of FastAPI
 # ✅ Allow React frontend to communicate with FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # ✅ Allows requests from your React app
+    allow_origins=["https://context-ai-beta.vercel.app/"],  # ✅ Replace with your actual Vercel domain
     allow_credentials=True,
     allow_methods=["*"],  # ✅ Allow all HTTP methods
     allow_headers=["*"],  # ✅ Allow all headers
