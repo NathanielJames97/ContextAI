@@ -4,14 +4,20 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()  # ✅ Only one instance of FastAPI
 
-# ✅ Allow React frontend to communicate with FastAPI
+# ✅ Allow requests from Vercel frontend and local development
+origins = [
+    "http://localhost:5173",  # Local development
+    "https://context-ai-beta.vercel.app",  # ✅ Your actual Vercel frontend URL
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://context-ai-beta.vercel.app/"],  # ✅ Replace with your actual Vercel domain
+    allow_origins=origins,  # ✅ Allow only specific domains
     allow_credentials=True,
     allow_methods=["*"],  # ✅ Allow all HTTP methods
     allow_headers=["*"],  # ✅ Allow all headers
 )
+
 
 # Load precomputed rankings
 def load_rankings(filepath="data/rankings.json"):
