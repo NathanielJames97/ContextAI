@@ -11,10 +11,11 @@ function App() {
   const checkWord = async () => {
     if (!guess.trim()) return;
     setLoading(true);
+    
     try {
       const res = await axios.get(`https://contextai-production-8a5a.up.railway.app/check/${guess}`);
       setResponse(res.data);
-
+  
       // Add the new guess to the leaderboard
       if (res.data.rank > 0) {
         setLeaderboard((prev) => [...prev, res.data].slice(-10)); // Keep only last 10 guesses
@@ -23,13 +24,16 @@ function App() {
       console.error("Error fetching data:", error);
       setResponse({ status: "Error fetching data" });
     }
+  
+    setGuess(""); // ✅ Clear input after submission
     setLoading(false);
   };
+  
 
   // Function to get bar color based on ranking
   const getBarColor = (rank) => {
-    if (rank <= 10) return "bg-green-500"; // Very close
-    if (rank <= 100) return "bg-yellow-400"; // Mid-range
+    if (rank <= 100) return "bg-green-500"; // Very close
+    if (rank <= 1000) return "bg-yellow-400"; // Mid-range
     return "bg-red-500"; // Far away
   };
 
