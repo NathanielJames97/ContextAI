@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     # Save rankings with timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_file = f"data/rankings_{timestamp}.json"
+    output_file = "data/rankings.json"
     
     print(f"Saving rankings to {output_file}...")  # ✅ Debugging print
     with open(output_file, "w") as f:
