@@ -37,14 +37,6 @@ function App() {
     setLoading(false);
   };
 
-  const restartGame = () => {
-    setGuess("");
-    setResponse(null);
-    setLeaderboard([]);
-    setGuessCount(0);
-    setGameOver(false);
-  };
-
   const getBarColor = (rank) => {
     if (rank <= 100) return "bg-green-500";
     if (rank <= 1000) return "bg-yellow-400";
@@ -95,14 +87,18 @@ function App() {
           </div>
 
           {/* Restart Button */}
-          <motion.button
-            onClick={restartGame}
+          <button
+            onClick={() => {
+              setGuess("");
+              setResponse(null);
+              setLeaderboard([]);
+              setGuessCount(0);
+              setGameOver(false);
+            }}
             className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
           >
             🔄 Play Again
-          </motion.button>
+          </button>
         </div>
       ) : (
         <div className="bg-gray-900 p-8 rounded-lg shadow-lg max-w-lg text-center">
