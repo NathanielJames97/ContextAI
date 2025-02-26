@@ -113,6 +113,25 @@ function App() {
           </motion.button>
         </div>
       )}
+
+      {/* Leaderboard Section */}
+      <div className="mt-8 w-full max-w-lg">
+        <h2 className="text-3xl font-bold mb-4 text-center">📜 Leaderboard</h2>
+        <div className="space-y-2">
+          {leaderboard.map((entry, index) => (
+            <div key={index} className="flex items-center space-x-3">
+              <p className="w-24 text-lg font-medium">{entry.word}</p>
+              <div className="w-full bg-gray-700 rounded-full h-5">
+                <div
+                  className={`h-5 rounded-full ${getBarColor(entry.rank)}`}
+                  style={{ width: getBarWidth(entry.rank) }}
+                ></div>
+              </div>
+              <p className="w-12 text-right font-semibold">{entry.rank}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
