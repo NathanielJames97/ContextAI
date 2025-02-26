@@ -37,6 +37,14 @@ function App() {
     setLoading(false);
   };
 
+  const restartGame = () => {
+    setGuess("");
+    setResponse(null);
+    setLeaderboard([]);
+    setGuessCount(0);
+    setGameOver(false);
+  };
+
   const getBarColor = (rank) => {
     if (rank <= 100) return "bg-green-500";
     if (rank <= 1000) return "bg-yellow-400";
@@ -59,7 +67,6 @@ function App() {
       >
         🔎 Contexto Game
       </motion.h1>
-
 
       {/* Guess Counter */}
       <p className="text-xl font-semibold mb-4">Guesses: {guessCount}</p>
@@ -88,50 +95,14 @@ function App() {
           </div>
 
           {/* Restart Button */}
-          <button
-            onClick={() => {
-              setGuess("");
-              setResponse(null);
-              setLeaderboard([]);
-              setGuessCount(0);
-              setGameOver(false);
-
-      {/* Game Panel */}
-      <div className="bg-gray-900 p-8 rounded-lg shadow-lg max-w-lg text-center">
-      <motion.input
-      type="text"
-      value={guess}
-      onChange={(e) => setGuess(e.target.value)}
-      onKeyDown={(e) => e.key === "Enter" && checkWord()} // ✅ Triggers checkWord on Enter key
-      placeholder="Enter a word..."
-      className="w-full p-3 text-white text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-      whileFocus={{ scale: 1.05 }}
-/>
-
-
-        <motion.button
-          onClick={checkWord}
-          className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          {loading ? "Checking..." : "🔍 Submit"}
-        </motion.button>
-
-        {response && (
-          <motion.div 
-            className="mt-6 p-4 rounded-lg shadow-lg"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{ 
-              backgroundColor: response.status === "correct" ? "#22c55e" : response.status === "try again" ? "#facc15" : "#ef4444"
-
-            }}
+          <motion.button
+            onClick={restartGame}
             className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
             🔄 Play Again
-          </button>
+          </motion.button>
         </div>
       ) : (
         <div className="bg-gray-900 p-8 rounded-lg shadow-lg max-w-lg text-center">
