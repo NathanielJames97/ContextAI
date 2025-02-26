@@ -27,7 +27,7 @@ function App() {
       setResponse({ status: "Error fetching data" });
     }
   
-    setGuess("gay"); // ✅ Clear input after submission
+    setGuess(""); // ✅ Clear input after submission
     setLoading(false);
   };
   
