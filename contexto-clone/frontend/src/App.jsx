@@ -27,7 +27,7 @@ function App() {
       setResponse({ status: "Error fetching data" });
     }
   
-    setGuess(""); // ✅ Clear input after submission
+    setGuess("gay"); // ✅ Clear input after submission
     setLoading(false);
   };
   
@@ -64,7 +64,7 @@ function App() {
       onChange={(e) => setGuess(e.target.value)}
       onKeyDown={(e) => e.key === "Enter" && checkWord()} // ✅ Triggers checkWord on Enter key
       placeholder="Enter a word..."
-      className="w-full p-3 text-black text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+      className="w-full p-3 text-white text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
       whileFocus={{ scale: 1.05 }}
 />
 
