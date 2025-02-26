@@ -1,45 +1,42 @@
 from fastapi import FastAPI
 import json
+import random
+import datetime
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()  # ✅ Only one instance of FastAPI
+app = FastAPI()
 
-# ✅ Allow requests from Vercel frontend and local development
 origins = [
-    "http://localhost:5173",  # Local development
-    "https://context-ai-beta.vercel.app",  # ✅ Your actual Vercel frontend URL
+    "http://localhost:5173",
+    "https://context-ai-beta.vercel.app",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # ✅ Allow only specific domains
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # ✅ Allow all HTTP methods
-    allow_headers=["*"],  # ✅ Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-
-# Load precomputed rankings
-def load_rankings(filepath="data/rankings.json"):
+# Load word list from JSON
+def load_word_list(filepath="data/word_list.json"):
     with open(filepath, "r") as file:
-        return json.load(file)
+        words = json.load(file)["words"]  # Adjust if your JSON structure is different
+    return words
 
-@app.get("/")
-def root():
-    return {"message": "Contexto API is running!"}
+# Store the daily word
+daily_word_data = {"word": None, "last_updated": None}
 
-@app.get("/check/{word}")
-def check_word(word: str):
-    rankings = load_rankings()
-    rank = rankings.get(word.lower(), -1)
+@app.get("/daily-word")
+def get_daily_word():
+    """Returns the daily challenge word, refreshing every 24 hours."""
+    global daily_word_data
 
-    if rank == 1:
-        return {"word": word, "rank": rank, "status": "correct"}
-    elif rank > 0:
-        return {"word": word, "rank": rank, "status": "try again"}
-    else:
-        return {"word": word, "rank": rank, "status": "word not found"}
+    today = datetime.date.today().isoformat()
+    if daily_word_data["last_updated"] != today:
+        words = load_word_list()
+        daily_word_data["word"] = random.choice(words)  # Pick a new word
+        daily_word_data["last_updated"] = today
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    return {"word": daily_word_data["word"]}
