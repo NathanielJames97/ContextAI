@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 
@@ -10,10 +10,28 @@ function App() {
   const [guessCount, setGuessCount] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
+  // Load saved game progress from localStorage on page load
+  useEffect(() => {
+    const savedGuesses = JSON.parse(localStorage.getItem("leaderboard")) || [];
+    const savedGuessCount = parseInt(localStorage.getItem("guessCount")) || 0;
+    const savedGameOver = localStorage.getItem("gameOver") === "true";
+
+    if (savedGuesses.length > 0) setLeaderboard(savedGuesses);
+    if (savedGuessCount > 0) setGuessCount(savedGuessCount);
+    setGameOver(savedGameOver);
+  }, []);
+
+  // Save game progress to localStorage whenever state updates
+  useEffect(() => {
+    localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+    localStorage.setItem("guessCount", guessCount.toString());
+    localStorage.setItem("gameOver", gameOver.toString());
+  }, [leaderboard, guessCount, gameOver]);
+
   const checkWord = async () => {
     if (!guess.trim() || gameOver) return;
     setLoading(true);
-    setGuessCount((prev) => prev + 1); // Increment guess count
+    setGuessCount((prev) => prev + 1);
 
     try {
       const res = await axios.get(`https://contextai-production-8a5a.up.railway.app/check/${guess}`);
@@ -26,7 +44,7 @@ function App() {
       }
 
       if (res.data.status === "correct") {
-        setGameOver(true); // Stop the game when correct word is found
+        setGameOver(true);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -35,6 +53,19 @@ function App() {
 
     setGuess("");
     setLoading(false);
+  };
+
+  const startNewGame = () => {
+    setGuess("");
+    setResponse(null);
+    setLeaderboard([]);
+    setGuessCount(0);
+    setGameOver(false);
+
+    // Clear local storage when starting a new game
+    localStorage.removeItem("leaderboard");
+    localStorage.removeItem("guessCount");
+    localStorage.removeItem("gameOver");
   };
 
   const getBarColor = (rank) => {
@@ -88,13 +119,7 @@ function App() {
 
           {/* Restart Button */}
           <button
-            onClick={() => {
-              setGuess("");
-              setResponse(null);
-              setLeaderboard([]);
-              setGuessCount(0);
-              setGameOver(false);
-            }}
+            onClick={startNewGame}
             className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition"
           >
             🔄 Play Again
