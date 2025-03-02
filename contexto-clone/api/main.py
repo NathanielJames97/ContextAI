@@ -8,6 +8,7 @@ app = FastAPI()  # ✅ Only one instance of FastAPI
 origins = [
     "http://localhost:5173",  # Local development
     "https://context-ai-beta.vercel.app",  # ✅ Your actual Vercel frontend URL
+    "https://context-ai-git-dev-storage-localdates-s-projects.vercel.app",
 ]
 
 app.add_middleware(
