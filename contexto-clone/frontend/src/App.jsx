@@ -10,22 +10,22 @@ function App() {
   const [guessCount, setGuessCount] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
-  // Load saved session data on page load
+  // Load saved game progress from localStorage on page load
   useEffect(() => {
-    const savedGuesses = JSON.parse(sessionStorage.getItem("leaderboard")) || [];
-    const savedGuessCount = parseInt(sessionStorage.getItem("guessCount")) || 0;
-    const savedGameOver = sessionStorage.getItem("gameOver") === "true";
+    const savedGuesses = JSON.parse(localStorage.getItem("leaderboard")) || [];
+    const savedGuessCount = parseInt(localStorage.getItem("guessCount")) || 0;
+    const savedGameOver = localStorage.getItem("gameOver") === "true";
 
     if (savedGuesses.length > 0) setLeaderboard(savedGuesses);
     if (savedGuessCount > 0) setGuessCount(savedGuessCount);
     setGameOver(savedGameOver);
   }, []);
 
-  // Save session progress on changes
+  // Save game progress to localStorage whenever state updates
   useEffect(() => {
-    sessionStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-    sessionStorage.setItem("guessCount", guessCount.toString());
-    sessionStorage.setItem("gameOver", gameOver.toString());
+    localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+    localStorage.setItem("guessCount", guessCount.toString());
+    localStorage.setItem("gameOver", gameOver.toString());
   }, [leaderboard, guessCount, gameOver]);
 
   const checkWord = async () => {
@@ -62,10 +62,10 @@ function App() {
     setGuessCount(0);
     setGameOver(false);
 
-    // Clear session storage
-    sessionStorage.removeItem("leaderboard");
-    sessionStorage.removeItem("guessCount");
-    sessionStorage.removeItem("gameOver");
+    // Clear local storage when starting a new game
+    localStorage.removeItem("leaderboard");
+    localStorage.removeItem("guessCount");
+    localStorage.removeItem("gameOver");
   };
 
   const getBarColor = (rank) => {
