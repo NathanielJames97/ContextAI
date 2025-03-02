@@ -118,6 +118,30 @@ function App() {
       {/* Guess Counter */}
       <p className="text-xl font-semibold mb-4">Guesses: {guessCount}</p>
 
+      
+
+      {/* Input & Submit Button */}
+      <div className="bg-gray-900 p-8 rounded-lg shadow-lg max-w-lg text-center space-y-4">
+        <motion.input
+          type="text"
+          value={guess}
+          onChange={(e) => setGuess(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && checkWord()}
+          placeholder="Enter a word..."
+          className="w-full p-3 text-white text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          whileFocus={{ scale: 1.05 }}
+        />
+
+        <motion.button
+          onClick={checkWord}
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          {loading ? "Checking..." : "🔍 Submit"}
+        </motion.button>
+      </div>
+
       {/* Guess Feedback Box */}
       {response && (
         <motion.div
@@ -143,28 +167,6 @@ function App() {
           </p>
         </motion.div>
       )}
-
-      {/* Input & Submit Button */}
-      <div className="bg-gray-900 p-8 rounded-lg shadow-lg max-w-lg text-center space-y-4">
-        <motion.input
-          type="text"
-          value={guess}
-          onChange={(e) => setGuess(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && checkWord()}
-          placeholder="Enter a word..."
-          className="w-full p-3 text-white text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          whileFocus={{ scale: 1.05 }}
-        />
-
-        <motion.button
-          onClick={checkWord}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          {loading ? "Checking..." : "🔍 Submit"}
-        </motion.button>
-      </div>
 
       {/* Leaderboard (Infinite Scroll) */}
       <div className="mt-8 w-full max-w-lg">
