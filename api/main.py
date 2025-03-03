@@ -14,6 +14,8 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  # ✅ Allow only specific domains
+    allow_origin_regex=r"https://context-ai-.*\.vercel\.app",  # ✅ Allows any subdomain on Vercel
+
     allow_credentials=True,
     allow_methods=["*"],  # ✅ Allow all HTTP methods
     allow_headers=["*"],  # ✅ Allow all headers
