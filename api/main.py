@@ -2,31 +2,33 @@ from fastapi import FastAPI
 import json
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()  # ✅ Only one instance of FastAPI
+app = FastAPI()
 
-# ✅ Allow requests from Vercel frontend and local development
 origins = [
-    "http://localhost:5173",  # Local development
-    "http://35.179.97.80",  # Your AWS server IP
-    "http://35.179.97.80:5173",  # Dev frontend running on Vite
-    "https://contextai-production-8a5a.up.railway.app",  # Your backend API
-    "https://context-ai-beta.vercel.app",  # Vercel frontend
+    "http://localhost:5173",
+    "http://35.179.97.80",
+    "http://35.179.97.80:5173",
+    "https://contextai-production-8a5a.up.railway.app",
+    "https://context-ai-beta.vercel.app",
     "https://context-ai-git-dev-storage-localdates-s-projects.vercel.app",
     "http://35.179.97.80:3000",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # ✅ Allow only specific domains
-    allow_origin_regex=r"https://context-ai-.*\.vercel\.app",  # ✅ Allows any subdomain on Vercel
-
+    allow_origins=origins,
+    allow_origin_regex=r"https://context-ai-.*\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["*"],  # ✅ Allow all HTTP methods
-    allow_headers=["*"],  # ✅ Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
+# Load daily word
+def load_daily_word(filepath="data/daily_word.json"):
+    with open(filepath, "r") as file:
+        return json.load(file)
 
-# Load precomputed rankings
+# Load rankings
 def load_rankings(filepath="data/rankings.json"):
     with open(filepath, "r") as file:
         return json.load(file)
@@ -34,6 +36,10 @@ def load_rankings(filepath="data/rankings.json"):
 @app.get("/")
 def root():
     return {"message": "Contexto API is running!"}
+
+@app.get("/daily_word")
+def get_daily_word():
+    return load_daily_word()
 
 @app.get("/check/{word}")
 def check_word(word: str):

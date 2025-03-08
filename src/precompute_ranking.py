@@ -1,17 +1,29 @@
 import json
 import os
+import random
 from datetime import datetime
 from similarity_engine import get_word_similarity
 
-# Load words from JSON file
-def load_word_list(filepath="data/word_list.json"):
+# File paths
+WORD_LIST_PATH = "data/word_list.json"
+RANKINGS_PATH = "data/rankings.json"
+DAILY_WORD_PATH = "data/daily_word.json"
+
+# Load word list
+def load_word_list(filepath=WORD_LIST_PATH):
     print("Loading word list...")  # ✅ Debugging print
     with open(filepath, "r") as file:
         data = json.load(file)
     print(f"Loaded {len(data.keys())} words.")  # ✅ Debugging print
-    return set(data.keys())  # Extract words as a set
+    return list(data.keys())  # Extract words as a list
 
-# Compute similarity rankings for a given word
+# Select a random daily word
+def select_daily_word(word_list):
+    daily_word = random.choice(word_list)
+    print(f"🎯 Selected Daily Word: {daily_word}")
+    return daily_word
+
+# Compute similarity rankings for the daily word
 def rank_words(secret_word, word_list):
     print(f"Ranking words for: {secret_word}")  # ✅ Debugging print
     similarities = {}
@@ -30,17 +42,19 @@ def rank_words(secret_word, word_list):
     return {word: rank+1 for rank, (word, _) in enumerate(sorted_words)}
 
 if __name__ == "__main__":
-    secret_word = "cooperative"  # Replace with dynamic daily selection logic
+    # Select a new daily word
     word_list = load_word_list()
+    daily_word = select_daily_word(word_list)
 
-    ranked_dict = rank_words(secret_word, word_list)
+    # Save daily word for frontend access
+    with open(DAILY_WORD_PATH, "w") as f:
+        json.dump({"daily_word": daily_word}, f)
 
-    # Save rankings with timestamp
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_file = "data/rankings.json"
-    
-    print(f"Saving rankings to {output_file}...")  # ✅ Debugging print
-    with open(output_file, "w") as f:
+    # Compute and save rankings
+    ranked_dict = rank_words(daily_word, word_list)
+
+    print(f"Saving rankings to {RANKINGS_PATH}...")  # ✅ Debugging print
+    with open(RANKINGS_PATH, "w") as f:
         json.dump(ranked_dict, f, indent=4)
 
     print("✅ Ranking process complete!")  # ✅ Final success message
