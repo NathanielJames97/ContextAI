@@ -19,17 +19,14 @@ origins = [
     "http://localhost:5173",
     "http://35.179.97.80",
     "http://35.179.97.80:5173",
-    "https://contextai-production-8a5a.up.railway.app",
-    "https://context-ai-beta.vercel.app",
-    "https://context-ai-git-dev-storage-localdates-s-projects.vercel.app",
     "http://35.179.97.80",
     "http://18.169.128.30",
+    "http://18.169.128.30:3000",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://context-ai-.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
