@@ -1,0 +1,39 @@
+name: Deploy VocaRank Game
+
+on:
+  push:
+    branches:
+      - main  # Runs only when pushing to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Deploy to AWS Server
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ${{ secrets.AWS_USER }}
+        key: ${{ secrets.AWS_PRIVATE_KEY }}
+        script: |
+          cd /path/to/contexto-game
+          
+          # Pull latest changes
+          git pull origin main
+
+          # Restart FastAPI backend
+          sudo supervisorctl restart contexto-backend
+
+          # Rebuild and restart frontend (React + Vite)
+          cd frontend
+          npm install
+          npm run build
+          pm2 restart contexto-frontend
+
+          # Confirm services are running
+          sudo supervisorctl status
+          pm2 list
