@@ -7,7 +7,10 @@ app = FastAPI()  # ✅ Only one instance of FastAPI
 # ✅ Allow requests from Vercel frontend and local development
 origins = [
     "http://localhost:5173",  # Local development
-    "https://context-ai-beta.vercel.app",  # ✅ Your actual Vercel frontend URL
+    "http://35.179.97.80",  # Your AWS server IP
+    "http://35.179.97.80:5173",  # Dev frontend running on Vite
+    "https://contextai-production-8a5a.up.railway.app",  # Your backend API
+    "https://context-ai-beta.vercel.app",  # Vercel frontend
     "https://context-ai-git-dev-storage-localdates-s-projects.vercel.app",
 ]
 
