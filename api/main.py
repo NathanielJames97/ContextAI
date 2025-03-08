@@ -12,6 +12,7 @@ origins = [
     "https://contextai-production-8a5a.up.railway.app",  # Your backend API
     "https://context-ai-beta.vercel.app",  # Vercel frontend
     "https://context-ai-git-dev-storage-localdates-s-projects.vercel.app",
+    "http://35.179.97.80:3000",
 ]
 
 app.add_middleware(
