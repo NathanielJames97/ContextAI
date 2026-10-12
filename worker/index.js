@@ -34,13 +34,31 @@ function createHandler(clock = () => /* @__PURE__ */ new Date()) {
     } catch {
       return json({ error: "Invalid path" }, 400);
     }
-    if (path === "/_internal/export" || path.startsWith("/_internal/export/")) {
+    if (path === "/_internal/migrate-rankings") {
       const authorized = env.RANKING_EXPORT_TOKEN && request.headers.get("authorization") === `Bearer ${env.RANKING_EXPORT_TOKEN}`;
-      if (request.method !== "GET" || !authorized) return json({ error: "Not found" }, 404);
-      const assetPath = path.slice("/_internal/export".length) || "/";
-      const allowed = /^\/(?:$|index\.html|assets\/[A-Za-z0-9._/-]+|_rankings\/\d{4}\.bin|favicon(?:\.[A-Za-z0-9]+)?|vite\.svg)$/.test(assetPath) && !assetPath.includes("..");
-      if (!allowed) return json({ error: "Not found" }, 404);
-      return env.ASSETS.fetch(new Request(new URL(assetPath, url), { method: "GET" }));
+      if (request.method !== "POST" || !authorized) return json({ error: "Not found" }, 404);
+      const start = Number(url.searchParams.get("start"));
+      const limit = Number(url.searchParams.get("limit"));
+      if (!Number.isInteger(start) || !Number.isInteger(limit) || start < 0 || start >= manifest_default.count || limit < 1 || limit > 50) {
+        return json({ error: "Invalid migration range" }, 400);
+      }
+      const end = Math.min(start + limit, manifest_default.count);
+      try {
+        for (let index = start; index < end; index++) {
+          const file = `/_rankings/${String(index).padStart(4, "0")}.bin`;
+          const response = await env.ASSETS.fetch(new Request(new URL(file, url)));
+          if (!response.ok) throw new Error(`Missing asset ${file}`);
+          const data = await response.arrayBuffer();
+          if (data.byteLength !== manifest_default.vocabulary.length * 2) throw new Error(`Invalid asset ${file}`);
+          await env.RANKINGS.put(`rankings/${file.slice("/_rankings/".length)}`, data, {
+            httpMetadata: { contentType: "application/octet-stream" }
+          });
+        }
+        return json({ start, migrated: end - start, next: end, total: manifest_default.count });
+      } catch (error) {
+        console.error(JSON.stringify({ event: "ranking_migration_failed", start, message: error.message }));
+        return json({ error: "Ranking migration failed", start }, 502);
+      }
     }
     if (path.startsWith("/_rankings")) return json({ error: "Not found" }, 404);
     if (!path.startsWith("/api/") && !path.startsWith("/check/")) {
@@ -67,10 +85,9 @@ function createHandler(clock = () => /* @__PURE__ */ new Date()) {
     const wordIndex = vocabulary.get(word);
     if (wordIndex === void 0) return json({ word, rank: -1, status: "word not found", ...publicPuzzle });
     try {
-      const assetUrl = new URL(`/_rankings/${String(index).padStart(4, "0")}.bin`, url);
-      const response = await env.ASSETS.fetch(new Request(assetUrl));
-      if (!response.ok || Number(response.headers.get("content-length")) > manifest_default.vocabulary.length * 2) throw new Error("Missing data");
-      const buffer = await response.arrayBuffer();
+      const ranking = await env.RANKINGS.get(`rankings/${String(index).padStart(4, "0")}.bin`);
+      if (!ranking || ranking.size !== manifest_default.vocabulary.length * 2) throw new Error("Missing data");
+      const buffer = await ranking.arrayBuffer();
       if (buffer.byteLength !== manifest_default.vocabulary.length * 2) throw new Error("Invalid data");
       const rank = new DataView(buffer).getUint16(wordIndex * 2, true);
       return json({ word, rank, status: rank === 1 ? "correct" : "try again", ...publicPuzzle });
