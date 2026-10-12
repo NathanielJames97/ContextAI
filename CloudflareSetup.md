@@ -36,7 +36,9 @@ ASCII English words of 4–12 letters with a word-frequency score of at least 3.
 A private seed chooses a pseudo-random answer order; consecutive dates use
 different answers until the eligible list cycles. The current ten-entry
 `data/word_list.txt` is retained as legacy data and no longer limits the
-daily answer pool.
+daily answer pool. The frequency source is pinned to wordfreq 3.1.1. Its
+frequency data includes SUBTLEX lists by Marc Brysbaert and colleagues; retain
+that attribution if redistributing the frequency data.
 
 ## Deploy and test
 
