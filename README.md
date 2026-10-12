@@ -30,8 +30,10 @@ objects.
 ## Deploy
 
 Cloudflare Workers Builds watches the `rebuild/cloudflare-native` branch.
-Pushing to that branch runs the frontend lint and build, then deploys the Worker
-with Wrangler. The build configuration is managed in Cloudflare.
+Code changes pushed to that branch run frontend lint/build and deploy the Worker
+module. The deploy script preserves the currently published UI assets and the
+private R2 ranking data, so a push cannot replace the live interface with the
+older recovered frontend source.
 
 The Worker reads private objects named `rankings/NNNN.bin` from the
 `contextai-rankings` bucket. Keep this bucket private; the browser should only
