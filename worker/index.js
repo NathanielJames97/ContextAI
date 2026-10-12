@@ -19,6 +19,7 @@ function normalizeWord(value) {
 __name(normalizeWord, "normalizeWord");
 
 // worker/index.js
+var focusScript = "<script>(() => {\n  let waiting = false;\n  const observer = new MutationObserver(() => {\n    const button = Array.from(document.querySelectorAll(\"button\")).find((item) => /Checking|Submit/.test(item.textContent || \"\"));\n    const input = document.querySelector('input[placeholder=\"Enter a word...\"]');\n    if (!button) return;\n    const label = button.textContent || \"\";\n    if (label.includes(\"Checking\")) waiting = true;\n    if (waiting && label.includes(\"Submit\")) {\n      waiting = false;\n      const rank = Array.from(document.querySelectorAll(\"p\")).find((item) => (item.textContent || \"\").includes(\"Rank:\"));\n      if (!/^Rank:\\s*1$/.test((rank?.textContent || \"\").trim())) input?.focus();\n    }\n  });\n  observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true });\n})();</script>";
 var vocabulary = new Map(manifest_default.vocabulary.map((word, index) => [word, index]));
 function json(data, status = 200) {
   return Response.json(data, { status, headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } });
@@ -34,7 +35,15 @@ function createHandler(clock = () => /* @__PURE__ */ new Date()) {
       return json({ error: "Invalid path" }, 400);
     }
     if (path.startsWith("/_rankings")) return json({ error: "Not found" }, 404);
-    if (!path.startsWith("/api/") && !path.startsWith("/check/")) return env.ASSETS.fetch(request);
+    if (!path.startsWith("/api/") && !path.startsWith("/check/")) {
+      const assetResponse = await env.ASSETS.fetch(request);
+      if ((path === "/" || path === "/index.html") && assetResponse.ok) {
+        return new HTMLRewriter().on("body", {
+          element(element) { element.append(focusScript, { html: true }); }
+        }).transform(assetResponse);
+      }
+      return assetResponse;
+    }
     if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
     const puzzle = puzzleFor(clock(), manifest_default);
     const { index, ...publicPuzzle } = puzzle;
