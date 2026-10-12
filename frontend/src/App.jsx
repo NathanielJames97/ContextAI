@@ -58,12 +58,14 @@ function App() {
     );
   }, [leaderboard, guessCount, gameOver, puzzleDate, puzzleReady]);
 
+  useEffect(() => {
+    if (puzzleReady && response && !gameOver) guessInputRef.current?.focus();
+  }, [gameOver, puzzleReady, response]);
+
   const checkWord = async () => {
     if (!guess.trim() || gameOver || !puzzleReady) return;
     setLoading(true);
     setGuessCount((prev) => prev + 1);
-
-    let solved = false;
 
     try {
       const res = await axios.get(
@@ -78,7 +80,6 @@ function App() {
       }
 
       if (res.data.status === "correct") {
-        solved = true;
         setGameOver(true);
       }
     } catch (error) {
@@ -89,8 +90,6 @@ function App() {
     setGuess("");
     setLoading(false);
 
-    // Keep the next guess ready without requiring another click.
-    if (!solved) setTimeout(() => guessInputRef.current?.focus(), 0);
   };
 
   const startNewGame = () => {
