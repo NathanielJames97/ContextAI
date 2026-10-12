@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 
@@ -87,6 +87,7 @@ function shareGrid(guesses) {
 }
 
 function App() {
+  const guessInputRef = useRef(null);
   const [guess, setGuess] = useState("");
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -146,6 +147,12 @@ function App() {
   useEffect(() => {
     loadPuzzle();
   }, [loadPuzzle]);
+
+  useEffect(() => {
+    if (puzzleStatus === "ready" && !loading && !gameOver) {
+      guessInputRef.current?.focus();
+    }
+  }, [gameOver, loading, puzzleStatus, response]);
 
   useEffect(() => {
     saveStoredJson(STATS_KEY, stats);
@@ -296,6 +303,7 @@ function App() {
             <form className="guess-form" onSubmit={checkWord}>
               <label className="sr-only" htmlFor="guess-input">Your word guess</label>
               <input
+                ref={guessInputRef}
                 id="guess-input"
                 type="text"
                 value={guess}
