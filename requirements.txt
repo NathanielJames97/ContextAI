@@ -3,4 +3,4 @@ uvicorn
 gensim
 nltk
 numpy
-wordfreq
+wordfreq==3.1.1
