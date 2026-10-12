@@ -255,7 +255,6 @@ function App() {
             <span className="brand-mark" aria-hidden="true">C</span>
             <span>Context<span className="brand-accent">AI</span></span>
           </a>
-          <span className="daily-pill"><span className="live-dot" /> DAILY WORD GAME</span>
         </header>
 
         <section className="hero-card" aria-labelledby="game-title">
