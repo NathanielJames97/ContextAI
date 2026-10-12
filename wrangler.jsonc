@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developers.cloudflare.com/workers/wrangler/config-schema.json",
+  "name": "contextai",
+  "main": "./worker/index.js",
+  "compatibility_date": "2026-10-12",
+  "assets": {
+    "directory": "./frontend/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/check/*"]
+  },
+  "r2_buckets": [
+    {
+      "binding": "RANKINGS",
+      "bucket_name": "contextai-rankings"
+    }
+  ]
+}
