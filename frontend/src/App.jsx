@@ -80,6 +80,15 @@ function rankColor(rank) {
   return "rank-meter--cool";
 }
 
+function rankComparison(rank, previousBestRank) {
+  if (previousBestRank == null) return "First ranked guess of the day.";
+  if (rank < previousBestRank) {
+    return `New best — up ${(previousBestRank - rank).toLocaleString()} places.`;
+  }
+  if (rank === previousBestRank) return `Tied your best rank of #${previousBestRank.toLocaleString()}.`;
+  return `Best remains #${previousBestRank.toLocaleString()} — down ${(rank - previousBestRank).toLocaleString()} places.`;
+}
+
 function shareGrid(guesses) {
   return guesses
     .map(({ rank }) => (rank <= 10 ? "🟩" : rank <= 100 ? "🟨" : rank <= 1000 ? "🟧" : "⬜"))
@@ -187,6 +196,9 @@ function App() {
         return;
       }
 
+      const previousBestRank = guesses.length
+        ? guesses.reduce((best, entry) => Math.min(best, entry.rank), Infinity)
+        : null;
       const nextGuesses = [...guesses, data].sort((a, b) => a.rank - b.rank);
       const nextGuessCount = guessCount + 1;
       const solved = data.status === "correct";
@@ -194,7 +206,7 @@ function App() {
       setGuessCount(nextGuessCount);
       setGameOver(solved);
       setGuess("");
-      setResponse({ kind: solved ? "correct" : "rank", ...data });
+      setResponse({ kind: solved ? "correct" : "rank", previousBestRank, ...data });
 
       const nextStats = {
         ...stats,
@@ -336,7 +348,7 @@ function App() {
                 animate={{ opacity: 1, y: 0 }}
               >
                 {response.kind === "correct" && <><strong>You found it{response.word ? `: ${response.word}` : ""}!</strong><span>Solved in {guessCount} {guessCount === 1 ? "guess" : "guesses"}. A new word arrives at midnight UTC.</span></>}
-                {response.kind === "rank" && <><strong>{response.word} <span className="feedback-rank">#{response.rank}</span></strong><span>{rankLabel(response.rank)} — try a related idea.</span></>}
+                {response.kind === "rank" && <><strong>{response.word} <span className="feedback-rank">#{response.rank}</span></strong><span>{rankComparison(response.rank, response.previousBestRank)}</span><span>{rankLabel(response.rank)} — try a related idea.</span></>}
                 {response.kind === "unknown" && <><strong>We couldn’t find “{response.word}”.</strong><span>Check the spelling or try another word.</span></>}
                 {response.kind === "duplicate" && <><strong>You already tried “{response.word}”.</strong><span>Try a different word and explore a new meaning.</span></>}
                 {response.kind === "network-error" && <><strong>That guess didn’t reach the game.</strong><span>Your guess was not counted. Check your connection and try again.</span></>}
