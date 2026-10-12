@@ -34,6 +34,14 @@ function createHandler(clock = () => /* @__PURE__ */ new Date()) {
     } catch {
       return json({ error: "Invalid path" }, 400);
     }
+    if (path === "/_internal/export" || path.startsWith("/_internal/export/")) {
+      const authorized = env.RANKING_EXPORT_TOKEN && request.headers.get("authorization") === `Bearer ${env.RANKING_EXPORT_TOKEN}`;
+      if (request.method !== "GET" || !authorized) return json({ error: "Not found" }, 404);
+      const assetPath = path.slice("/_internal/export".length) || "/";
+      const allowed = /^\/(?:$|index\.html|assets\/[A-Za-z0-9._/-]+|_rankings\/\d{4}\.bin|favicon(?:\.[A-Za-z0-9]+)?|vite\.svg)$/.test(assetPath) && !assetPath.includes("..");
+      if (!allowed) return json({ error: "Not found" }, 404);
+      return env.ASSETS.fetch(new Request(new URL(assetPath, url), { method: "GET" }));
+    }
     if (path.startsWith("/_rankings")) return json({ error: "Not found" }, 404);
     if (!path.startsWith("/api/") && !path.startsWith("/check/")) {
       const assetResponse = await env.ASSETS.fetch(request);
