@@ -1,46 +1,99 @@
+"""Precompute deterministic daily Contexto rankings and save them for Cloudflare R2."""
+from __future__ import annotations
+
+import argparse
 import json
-import os
-from datetime import datetime
-from similarity_engine import get_word_similarity
+from datetime import date, datetime, timezone
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
-# Load words from JSON file
-def load_word_list(filepath="data/word_list.json"):
-    print("Loading word list...")  # ✅ Debugging print
-    with open(filepath, "r") as file:
+import gensim.downloader as gensim_api
+
+ROOT = Path(__file__).resolve().parents[1]
+CANDIDATES = ROOT / "data" / "word_list.txt"
+VOCABULARY = ROOT / "data" / "word_list.json"
+OUTPUT_DIR = ROOT / "data" / "daily"
+ANCHOR_DATE = date(2026, 10, 12)
+MODEL_NAME = "fasttext-wiki-news-subwords-300"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--target-date",
+        type=date.fromisoformat,
+        default=datetime.now(timezone.utc).date(),
+        help="UTC puzzle date in YYYY-MM-DD format (defaults to today's UTC date)",
+    )
+    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
+    return parser.parse_args()
+
+
+def select_secret_word(target_date: date) -> str:
+    candidates = [
+        line.strip().lower()
+        for line in CANDIDATES.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    if not candidates:
+        raise ValueError(f"No secret-word candidates found in {CANDIDATES}")
+
+    offset = (target_date - ANCHOR_DATE).days % len(candidates)
+    return candidates[offset]
+
+
+def load_vocabulary() -> list[str]:
+    with VOCABULARY.open(encoding="utf-8") as file:
         data = json.load(file)
-    print(f"Loaded {len(data.keys())} words.")  # ✅ Debugging print
-    return set(data.keys())  # Extract words as a set
 
-# Compute similarity rankings for a given word
-def rank_words(secret_word, word_list):
-    print(f"Ranking words for: {secret_word}")  # ✅ Debugging print
-    similarities = {}
+    words = data.keys() if isinstance(data, dict) else data
+    return sorted({str(word).strip().lower() for word in words if str(word).strip()})
 
-    for idx, word in enumerate(word_list):
-        if idx % 100 == 0:  # Print progress every 100 words
-            print(f"Processing {idx}/{len(word_list)}: {word}")
 
+def build_rankings(secret_word: str, words: list[str]) -> dict[str, int]:
+    model = gensim_api.load(MODEL_NAME)
+    similarities: list[tuple[str, float]] = []
+
+    for word in words:
         try:
-            similarities[word] = get_word_similarity(secret_word, word)
+            similarities.append((word, float(model.similarity(secret_word, word))))
         except KeyError:
-            continue  # Skip words not in model
+            # FastText can still return vectors for many unseen forms, but skip
+            # anything the model cannot represent.
+            continue
 
-    print("Sorting words by similarity...")  # ✅ Debugging print
-    sorted_words = sorted(similarities.items(), key=lambda x: x[1], reverse=True)
-    return {word: rank+1 for rank, (word, _) in enumerate(sorted_words)}
+    if not any(word == secret_word for word, _ in similarities):
+        raise ValueError(
+            f"Secret word {secret_word!r} is absent from the guess vocabulary "
+            "or unsupported by the FastText model"
+        )
+
+    similarities.sort(key=lambda item: (-item[1], item[0]))
+    return {word: index for index, (word, _) in enumerate(similarities, start=1)}
+
+
+def main() -> None:
+    args = parse_args()
+    secret_word = select_secret_word(args.target_date)
+    rankings = build_rankings(secret_word, load_vocabulary())
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = args.output_dir / f"{args.target_date.isoformat()}.json"
+
+    # Atomic replacement avoids leaving a truncated ranking if the runner stops.
+    with NamedTemporaryFile(
+        "w", encoding="utf-8", dir=args.output_dir, delete=False
+    ) as temporary:
+        json.dump(rankings, temporary, separators=(",", ":"), ensure_ascii=False)
+        temporary.write("\n")
+        temporary_path = Path(temporary.name)
+
+    temporary_path.replace(output_path)
+    print(
+        f"Created {output_path} for {args.target_date.isoformat()} "
+        f"(secret word: {secret_word}; {len(rankings)} ranked words)"
+    )
+
 
 if __name__ == "__main__":
-    secret_word = "cooperative"  # Replace with dynamic daily selection logic
-    word_list = load_word_list()
-
-    ranked_dict = rank_words(secret_word, word_list)
-
-    # Save rankings with timestamp
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_file = "data/rankings.json"
-    
-    print(f"Saving rankings to {output_file}...")  # ✅ Debugging print
-    with open(output_file, "w") as f:
-        json.dump(ranked_dict, f, indent=4)
-
-    print("✅ Ranking process complete!")  # ✅ Final success message
+    main()
