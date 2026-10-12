@@ -10,32 +10,61 @@ function App() {
   const [displayedGuesses, setDisplayedGuesses] = useState(10); // Initial load amount
   const [guessCount, setGuessCount] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [puzzleDate, setPuzzleDate] = useState(null);
+  const [puzzleReady, setPuzzleReady] = useState(false);
   const leaderboardRef = useRef(null);
 
   useEffect(() => {
-    const savedGuesses = JSON.parse(localStorage.getItem("leaderboard")) || [];
-    const savedGuessCount = parseInt(localStorage.getItem("guessCount")) || 0;
-    const savedGameOver = localStorage.getItem("gameOver") === "true";
+    let active = true;
 
-    if (savedGuesses.length > 0) setLeaderboard(savedGuesses);
-    if (savedGuessCount > 0) setGuessCount(savedGuessCount);
-    setGameOver(savedGameOver);
+    axios
+      .get("/api/today")
+      .then(({ data }) => {
+        if (!active) return;
+
+        const date = data.date;
+        const storageKey = `contextai-game-${date}`;
+        let saved = {};
+
+        try {
+          saved = JSON.parse(localStorage.getItem(storageKey) || "{}") || {};
+        } catch {
+          saved = {};
+        }
+
+        setPuzzleDate(date);
+        setLeaderboard(Array.isArray(saved.guesses) ? saved.guesses : []);
+        setGuessCount(Number(saved.guessCount) || 0);
+        setGameOver(saved.gameOver === true);
+        setPuzzleReady(true);
+      })
+      .catch((error) => {
+        console.error("Today's puzzle is unavailable:", error);
+        if (active) setResponse({ status: "Today's puzzle is not ready yet" });
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-    localStorage.setItem("guessCount", guessCount.toString());
-    localStorage.setItem("gameOver", gameOver.toString());
-  }, [leaderboard, guessCount, gameOver]);
+    if (!puzzleReady || !puzzleDate) return;
+
+    localStorage.setItem(
+      `contextai-game-${puzzleDate}`,
+      JSON.stringify({ guesses: leaderboard, guessCount, gameOver })
+    );
+  }, [leaderboard, guessCount, gameOver, puzzleDate, puzzleReady]);
 
   const checkWord = async () => {
-    if (!guess.trim() || gameOver) return;
+    if (!guess.trim() || gameOver || !puzzleReady) return;
     setLoading(true);
     setGuessCount((prev) => prev + 1);
 
     try {
       const res = await axios.get(
-        `https://contextai-production-8a5a.up.railway.app/check/${guess}`
+        `/api/check/${encodeURIComponent(guess.trim())}`
       );
       setResponse(res.data);
 
@@ -64,9 +93,7 @@ function App() {
     setGuessCount(0);
     setGameOver(false);
 
-    localStorage.removeItem("leaderboard");
-    localStorage.removeItem("guessCount");
-    localStorage.removeItem("gameOver");
+    if (puzzleDate) localStorage.removeItem(`contextai-game-${puzzleDate}`);
   };
 
   const getBarColor = (rank) => {
