@@ -92,16 +92,6 @@ function App() {
 
   };
 
-  const startNewGame = () => {
-    setGuess("");
-    setResponse(null);
-    setLeaderboard([]);
-    setGuessCount(0);
-    setGameOver(false);
-
-    if (puzzleDate) localStorage.removeItem(`contextai-game-${puzzleDate}`);
-  };
-
   const getBarColor = (rank) => {
     if (rank <= 100) return "bg-green-500";
     if (rank <= 1000) return "bg-yellow-400";
