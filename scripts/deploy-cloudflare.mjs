@@ -64,6 +64,25 @@ async function checkLiveGame() {
   ) {
     throw new Error("The deployed Worker could not rank a known vocabulary word");
   }
+
+  const leaderboardResponse = await fetch(`${workerUrl}/api/leaderboard/today`);
+  const leaderboard = await leaderboardResponse.json();
+  if (
+    !leaderboardResponse.ok ||
+    leaderboard.date !== expectedDate ||
+    !Array.isArray(leaderboard.entries) ||
+    typeof leaderboard.canSubmit !== "boolean"
+  ) {
+    throw new Error("The deployed Worker could not load today's leaderboard");
+  }
+
+  const submissionResponse = await fetch(`${workerUrl}/api/leaderboard/today`, {
+    method: "POST",
+    headers: { origin: workerUrl },
+  });
+  if (submissionResponse.status !== 401) {
+    throw new Error("The deployed Worker did not protect score submissions from unverified players");
+  }
 }
 
 const buildCommand = windows ? "npm.cmd" : "npm";
@@ -81,7 +100,7 @@ wrangler(["deploy", "--config", "wrangler.jsonc"]);
 
 try {
   await checkLiveGame();
-  process.stdout.write("Cloudflare deployment verified: health, today's puzzle, and a ranked guess all work.\n");
+  process.stdout.write("Cloudflare deployment verified: health, today's puzzle, ranked guesses, and the opt-in leaderboard all work.\n");
 } catch (error) {
   process.stderr.write(`${error.message}; rolling back the Worker and its assets.\n`);
   wrangler([

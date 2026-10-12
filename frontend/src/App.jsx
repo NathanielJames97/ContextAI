@@ -89,6 +89,40 @@ function rankComparison(rank, previousBestRank) {
   return `Best remains #${previousBestRank.toLocaleString()} — down ${(rank - previousBestRank).toLocaleString()} places.`;
 }
 
+function getMasterySummary(stats) {
+  const days = Object.entries(stats)
+    .filter(([, result]) => result?.played)
+    .sort(([first], [second]) => first.localeCompare(second));
+  const bestRank = days.reduce(
+    (best, [, result]) => Number.isFinite(result.bestRank) ? Math.min(best, result.bestRank) : best,
+    Infinity,
+  );
+  const solvedDays = days.filter(([, result]) => result.solved && Number.isFinite(result.guesses));
+  const averageSolveGuesses = solvedDays.length
+    ? solvedDays.reduce((total, [, result]) => total + result.guesses, 0) / solvedDays.length
+    : null;
+
+  return {
+    bestRank: Number.isFinite(bestRank) ? bestRank : null,
+    averageSolveGuesses,
+    played: days.length,
+    recent: days.slice(-7).reverse(),
+  };
+}
+
+function formatPuzzleDay(date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00Z`));
+}
+
+function formatSolveTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
 function shareGrid(guesses) {
   return guesses
     .map(({ rank }) => (rank <= 10 ? "🟩" : rank <= 100 ? "🟨" : rank <= 1000 ? "🟧" : "⬜"))
@@ -108,11 +142,43 @@ function App() {
   const [puzzleStatus, setPuzzleStatus] = useState("loading");
   const [stats, setStats] = useState(() => readStoredJson(STATS_KEY, {}));
   const [shareMessage, setShareMessage] = useState("");
+  const [leaderboard, setLeaderboard] = useState({ entries: [], myEntry: null, canSubmit: false });
+  const [leaderboardStatus, setLeaderboardStatus] = useState("loading");
+  const [leaderboardPosting, setLeaderboardPosting] = useState(false);
+  const [leaderboardMessage, setLeaderboardMessage] = useState("");
+  const [playerAlias, setPlayerAlias] = useState(null);
 
   const streakSummary = useMemo(
     () => getStreakSummary(stats, puzzleDate || readToday()),
     [stats, puzzleDate]
   );
+  const masterySummary = useMemo(() => getMasterySummary(stats), [stats]);
+
+  const loadLeaderboard = useCallback(async () => {
+    try {
+      const { data } = await axios.get("/api/leaderboard/today");
+      setLeaderboard(data);
+      if (data.playerAlias) setPlayerAlias(data.playerAlias);
+      setLeaderboardStatus("ready");
+    } catch {
+      setLeaderboardStatus("error");
+    }
+  }, []);
+
+  const postLeaderboardScore = async () => {
+    setLeaderboardPosting(true);
+    setLeaderboardMessage("");
+    try {
+      const { data } = await axios.post("/api/leaderboard/today");
+      setLeaderboard(data);
+      setLeaderboardStatus("ready");
+      setLeaderboardMessage(`Posted as ${data.myEntry.alias} at #${data.myEntry.position}.`);
+    } catch (error) {
+      setLeaderboardMessage(error.response?.data?.error || "Score submission failed.");
+    } finally {
+      setLeaderboardPosting(false);
+    }
+  };
 
   const loadPuzzle = useCallback(async () => {
     setPuzzleStatus("loading");
@@ -133,6 +199,26 @@ function App() {
               entry.rank > 0
           )
         : [];
+      if (savedGuesses.length > 0) {
+        const savedBestRank = savedGuesses.reduce((best, entry) => Math.min(best, entry.rank), Infinity);
+        setStats((currentStats) => {
+          const existing = currentStats[data.date] || {};
+          const bestRank = Math.min(
+            Number.isFinite(existing.bestRank) ? existing.bestRank : Infinity,
+            savedBestRank,
+          );
+          return {
+            ...currentStats,
+            [data.date]: {
+              ...existing,
+              played: true,
+              solved: existing.solved === true || saved.gameOver === true,
+              guesses: Math.max(Number(existing.guesses) || 0, Number(saved.guessCount) || 0),
+              bestRank,
+            },
+          };
+        });
+      }
       setPuzzleDate(data.date);
       setGuesses(savedGuesses);
       setGuessCount(Number(saved.guessCount) || 0);
@@ -146,6 +232,12 @@ function App() {
           rank: 1,
         });
       }
+      try {
+        const { data: session } = await axios.post("/api/leaderboard/session");
+        setPlayerAlias(session.playerAlias);
+      } catch {
+        setPlayerAlias(null);
+      }
       setPuzzleStatus("ready");
     } catch (error) {
       const notReady = error.response?.status === 503;
@@ -156,6 +248,10 @@ function App() {
   useEffect(() => {
     loadPuzzle();
   }, [loadPuzzle]);
+
+  useEffect(() => {
+    if (puzzleStatus === "ready") loadLeaderboard();
+  }, [loadLeaderboard, puzzleStatus]);
 
   useEffect(() => {
     if (puzzleStatus === "ready" && !loading && !gameOver) {
@@ -191,6 +287,7 @@ function App() {
     setResponse(null);
     try {
       const { data } = await axios.get(`/api/check/${encodeURIComponent(word)}`);
+      if (data.playerAlias) setPlayerAlias(data.playerAlias);
       if (!Number.isFinite(data.rank) || data.rank <= 0) {
         setResponse({ kind: "unknown", word });
         return;
@@ -214,9 +311,11 @@ function App() {
           played: true,
           solved: solved || stats[puzzleDate]?.solved === true,
           guesses: nextGuessCount,
+          bestRank: Math.min(stats[puzzleDate]?.bestRank || Infinity, data.rank),
         },
       };
       setStats(nextStats);
+      if (solved) void loadLeaderboard();
     } catch {
       setResponse({ kind: "network-error" });
     } finally {
@@ -359,6 +458,11 @@ function App() {
               <div className="win-actions">
                 <button className="button button--share" type="button" onClick={shareResult}>Share spoiler-free result</button>
                 {shareMessage && <span className="share-message" role="status">{shareMessage}</span>}
+                {leaderboard.canSubmit && (
+                  <button className="button button--leaderboard" type="button" onClick={postLeaderboardScore} disabled={leaderboardPosting}>
+                    {leaderboardPosting ? "Posting score…" : `Post to today’s board as ${playerAlias || "Guest"}`}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -370,6 +474,78 @@ function App() {
           <div><strong>{streakSummary.solved}</strong><span>solved</span></div>
           <div><strong>{streakSummary.played}</strong><span>played</span></div>
           <p>Saved on this device</p>
+        </section>
+
+        <section className="mastery-section" aria-labelledby="mastery-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">PRIVATE RECORD</p>
+              <h2 id="mastery-title">Mastery</h2>
+            </div>
+            <span className="mastery-private-note">Saved on this device</span>
+          </div>
+          <div className="mastery-overview">
+            <div><strong>{masterySummary.bestRank ? `#${masterySummary.bestRank.toLocaleString()}` : "—"}</strong><span>personal best rank</span></div>
+            <div><strong>{masterySummary.averageSolveGuesses == null ? "—" : masterySummary.averageSolveGuesses.toFixed(1)}</strong><span>avg. guesses to solve</span></div>
+            <div><strong>{masterySummary.played}</strong><span>puzzles played</span></div>
+          </div>
+          {masterySummary.recent.length > 0 ? (
+            <ol className="mastery-history" aria-label="Recent daily results">
+              {masterySummary.recent.map(([date, result]) => (
+                <li key={date}>
+                  <time dateTime={date}>{formatPuzzleDay(date)}</time>
+                  <span>{Number.isFinite(result.bestRank) ? `Best #${result.bestRank.toLocaleString()}` : "No rank recorded"}</span>
+                  <span>{result.solved ? `Solved in ${result.guesses}` : "Unsolved"}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="mastery-empty">Your daily record will appear here after your first ranked guess.</p>
+          )}
+        </section>
+
+        <section className="leaderboard-section" aria-labelledby="leaderboard-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">TODAY’S FIELD</p>
+              <h2 id="leaderboard-title">Daily leaderboard</h2>
+            </div>
+            <span className="leaderboard-rule">Fewest guesses · fastest tie-break</span>
+          </div>
+          <p className="leaderboard-privacy">Posting is optional. Scores appear publicly under a generated guest tag.</p>
+          {leaderboardStatus === "loading" ? (
+            <p className="leaderboard-empty" role="status">Loading today’s scores…</p>
+          ) : leaderboardStatus === "error" ? (
+            <p className="leaderboard-empty" role="status">Today’s leaderboard is unavailable.</p>
+          ) : leaderboard.entries.length === 0 ? (
+            <p className="leaderboard-empty">No scores posted yet.</p>
+          ) : (
+            <ol className="leaderboard-list" aria-label="Top daily scores">
+              {leaderboard.entries.map((entry) => (
+                <li className={`leaderboard-row${entry.alias === playerAlias ? " leaderboard-row--self" : ""}`} key={entry.alias}>
+                  <span className="leaderboard-position">#{entry.position}</span>
+                  <span className="leaderboard-alias">{entry.alias}</span>
+                  <span className="leaderboard-guesses">{entry.guesses} {entry.guesses === 1 ? "guess" : "guesses"}</span>
+                  <span className="leaderboard-time">{formatSolveTime(entry.seconds)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          {leaderboard.myEntry && leaderboard.myEntry.position > leaderboard.entries.length && (
+            <div className="leaderboard-row leaderboard-row--self leaderboard-own-row">
+              <span className="leaderboard-position">#{leaderboard.myEntry.position}</span>
+              <span className="leaderboard-alias">{leaderboard.myEntry.alias} · you</span>
+              <span className="leaderboard-guesses">{leaderboard.myEntry.guesses} {leaderboard.myEntry.guesses === 1 ? "guess" : "guesses"}</span>
+              <span className="leaderboard-time">{formatSolveTime(leaderboard.myEntry.seconds)}</span>
+            </div>
+          )}
+          {leaderboard.myEntry && leaderboard.myEntry.position <= leaderboard.entries.length && (
+            <p className="leaderboard-personal-rank">Your score: #{leaderboard.myEntry.position}</p>
+          )}
+          {gameOver && !leaderboard.canSubmit && !leaderboard.myEntry && (
+            <p className="leaderboard-empty">This solve was not recorded by today’s leaderboard.</p>
+          )}
+          {leaderboardMessage && <p className="leaderboard-message" role="status">{leaderboardMessage}</p>}
         </section>
 
         <section className="guesses-section" aria-labelledby="guesses-title">

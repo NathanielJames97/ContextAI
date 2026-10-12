@@ -14,5 +14,36 @@
       "binding": "RANKINGS",
       "bucket_name": "contextai-rankings"
     }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LEADERBOARD",
+        "class_name": "DailyLeaderboard"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["DailyLeaderboard"]
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "GUESS_RATE_LIMIT",
+      "namespace_id": "783421605451",
+      "simple": { "limit": 120, "period": 60 }
+    },
+    {
+      "name": "SESSION_RATE_LIMIT",
+      "namespace_id": "783421605452",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "LEADERBOARD_RATE_LIMIT",
+      "namespace_id": "783421605453",
+      "simple": { "limit": 60, "period": 60 }
+    }
   ]
 }
