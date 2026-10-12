@@ -14,8 +14,7 @@ for a submitted guess; it never returns the ranking map or secret word.
    - `CF_ACCOUNT_ID`
    - `CF_R2_ACCESS_KEY_ID`
    - `CF_R2_SECRET_ACCESS_KEY`
-   - `DAILY_WORD_SEED` — a private random value of at least 32 characters.
-     Keep it unchanged so scheduled retries select the same daily answers.
+   - `DAILY_WORD_SEED` — generate with `python -c 'import secrets; print(secrets.token_urlsafe(48))'` and store the output as a private random value. Keep it unchanged so the answer order remains stable.
 4. Bind the same bucket to the Worker in `wrangler.jsonc`.
 5. Create a Cloudflare API token with Workers Scripts:Edit and account Workers
    Routes:Edit permissions; use it with `CLOUDFLARE_API_TOKEN` and
