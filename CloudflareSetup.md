@@ -47,7 +47,7 @@ From the repository root:
 ```sh
 npm --prefix frontend ci
 npm --prefix frontend run build
-npx wrangler dev
+npx --yes wrangler@4 dev --config wrangler.jsonc
 ```
 
 The Worker reads UTC date keys in R2 named
