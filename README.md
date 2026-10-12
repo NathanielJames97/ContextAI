@@ -23,15 +23,13 @@ Contexto is a word-guessing game where players attempt to find a secret word bas
 - **Tailwind CSS** – Modern styling.
 - **Framer Motion** – Smooth animations.
 - **Axios** – API communication.
-- **Vercel** – Hosting.
+- **Cloudflare Workers Static Assets** – Hosts the frontend and API together.
 
 ### **Backend** (FastAPI)
 
-- **FastAPI** – Handles word similarity ranking and game logic.
-- **FastText (Gensim)** – AI-based similarity engine.
-- **JSON Word List** – Stores precomputed rankings.
-- **CORS Middleware** – Enables frontend-backend communication.
-- **Railway** – API hosting.
+- **Cloudflare Workers** – Serves the same-origin game API.
+- **Cloudflare R2** – Stores private, precomputed daily rankings.
+- **FastText (Gensim)** – Computes each day's ranking in a scheduled GitHub Actions job.
 
 ## 📂 Project Structure
 
@@ -63,33 +61,25 @@ Contexto is a word-guessing game where players attempt to find a secret word bas
 
 ## 🛠️ Installation & Setup
 
-### **1️⃣ Clone the repository**
+### Local Cloudflare runtime
 
 ```sh
-git clone https://github.com/NathanielJames97/ContextAI.git
-cd ContextAI
+npm ci --prefix frontend
+npm run build --prefix frontend
+npx --yes wrangler@4 dev --config wrangler.jsonc
 ```
 
-### **2️⃣ Backend Setup (FastAPI + FastText)**
+The local Worker serves `/api/health`. To play the daily puzzle locally, configure
+an R2 bucket and generate a ranking using the instructions in
+[CloudflareSetup.md](CloudflareSetup.md).
 
-```sh
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
+### Cloudflare deployment
 
-### **3️⃣ Frontend Setup (React + Vite)**
-
-```sh
-cd frontend
-npm install
-npm run dev
-```
-
-### **4️⃣ Deployment**
-
-- **Frontend:** Deploy on **Vercel**
-- **Backend:** Deploy on **Railway**
+After adding the Cloudflare deployment secrets and creating the private R2
+bucket, pushes to `master` deploy the frontend and Worker through GitHub Actions.
+A second scheduled workflow precomputes tomorrow's daily ranking and publishes
+it to R2. Follow [CloudflareSetup.md](CloudflareSetup.md) for the one-time setup
+and first-puzzle bootstrap.
 
 ## 🎯 Roadmap
 
