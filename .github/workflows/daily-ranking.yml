@@ -86,7 +86,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: requirements-ranking.txt
 
       - name: Cache the FastText model
         if: ${{ steps.existing.outputs.exists != 'true' }}
@@ -97,7 +97,7 @@ jobs:
 
       - name: Install ranking dependencies
         if: ${{ steps.existing.outputs.exists != 'true' }}
-        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements-ranking.txt
 
       - name: Test daily answer selection
         if: ${{ steps.existing.outputs.exists != 'true' }}
