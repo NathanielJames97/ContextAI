@@ -1,9 +1,10 @@
 # Daily ranking automation and Cloudflare runtime
 
-The frontend stays React/Vite. A scheduled GitHub Actions workflow precomputes
-the next UTC day's ranking with the existing FastText model, then uploads it to
-a private Cloudflare R2 bucket. The Worker serves only the date and the result
-for a submitted guess; it never returns the ranking map or secret word.
+The React frontend is built with Vite and hosted with the Worker as Cloudflare
+Workers Static Assets. A scheduled GitHub Actions workflow precomputes the next
+UTC day's ranking with the existing FastText model, then uploads it to a private
+Cloudflare R2 bucket. The Worker serves only the date and the result for a
+submitted guess; it never returns the ranking map or secret word.
 
 ## Cloudflare resources
 

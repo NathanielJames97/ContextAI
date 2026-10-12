@@ -1,67 +1,28 @@
-# Contexto Word Game Clone
+# ContextAI
 
-## 🎮 About the Game
+ContextAI is a daily word game about meaning. Guess words, follow their semantic ranks, and find the hidden answer. A new puzzle is published for each UTC day.
 
-Contexto is a word-guessing game where players attempt to find a secret word based on **semantic similarity** rather than exact definitions. The game uses **AI-powered ranking** to provide feedback on guesses, making it a unique and engaging challenge.
+## How to play
 
-## 🚀 Features
+- Enter a word and check its rank.
+- A smaller rank means the word is closer in meaning to the answer; rank **1** is the answer.
+- Keep guessing. Your valid guesses are ordered from closest to furthest.
+- Your daily progress and personal stats are saved in this browser on this device.
+- After solving, share a spoiler-free result. The share grid shows rank bands without revealing the answer.
 
-- **Daily Challenge Mode** – A new secret word every 24 hours.
-- **Leaderboard** – Visual ranking with progress bars.
-- **Streaks & Progress Tracking** – Rewards for long streaks.
-- **Word History & Analysis** – Review past guesses and closest attempts.
-- **Dark & Light Mode Toggle** – Customizable UI.
-- **Mobile Optimization** – Fullscreen mode and swipe gestures.
-- **Multi-language Support** (Upcoming) – Play in different languages.
-- **Multiplayer Mode** (Upcoming) – Compete with friends.
+The game currently includes daily puzzles, ranked guess history, on-device play and solve counts, a daily solve streak, and spoiler-free sharing. Stats stay in the browser and do not sync between devices.
 
-## 🏗️ Tech Stack
+## Tech stack
 
-### **Frontend** (React + Vite)
+- **Frontend:** React, Framer Motion, and Tailwind CSS
+- **Build tool:** Vite builds the static frontend bundle in GitHub Actions
+- **Live hosting and API:** Cloudflare Workers Static Assets
+- **Daily rankings:** Private Cloudflare R2 bucket
+- **Puzzle generation:** Scheduled GitHub Actions workflow
 
-- **React (Vite)** – Fast and optimized UI rendering.
-- **Tailwind CSS** – Modern styling.
-- **Framer Motion** – Smooth animations.
-- **Axios** – API communication.
-- **Cloudflare Workers Static Assets** – Hosts the frontend and API together.
+The Worker returns the date and the result of an individual guess. The private ranking map and answer are not sent to the browser.
 
-### **Backend** (FastAPI)
-
-- **Cloudflare Workers** – Serves the same-origin game API.
-- **Cloudflare R2** – Stores private, precomputed daily rankings.
-- **FastText (Gensim)** – Computes each day's ranking in a scheduled GitHub Actions job.
-
-## 📂 Project Structure
-
-```
-📦 Contexto-Clone
-├── 📁 backend (FastAPI)
-│   ├── main.py (API logic)
-│   ├── word_list.json (Word dataset)
-│   ├── requirements.txt (Dependencies)
-│   └── Dockerfile (For deployment)
-│
-├── 📁 frontend (React + Vite)
-│   ├── src/
-│   │   ├── components/ (Game UI)
-│   │   ├── pages/ (Game screens)
-│   │   ├── App.tsx (Main app structure)
-│   │   ├── index.tsx (Entry point)
-│   │   ├── api.ts (Handles API requests)
-│   │   ├── styles.css (Custom styles)
-│   └── package.json (Dependencies)
-│
-├── 📁 deployment
-│   ├── railway.json (Railway hosting config)
-│   ├── vercel.json (Vercel hosting config)
-│   └── docker-compose.yml (For local setup)
-│
-└── README.md (Project documentation)
-```
-
-## 🛠️ Installation & Setup
-
-### Local Cloudflare runtime
+## Run locally
 
 ```sh
 npm ci --prefix frontend
@@ -69,35 +30,32 @@ npm run build --prefix frontend
 npx --yes wrangler@4 dev --config wrangler.jsonc
 ```
 
-The local Worker serves `/api/health`. To play the daily puzzle locally, configure
-an R2 bucket and generate a ranking using the instructions in
-[CloudflareSetup.md](CloudflareSetup.md).
+The Worker exposes `/api/health`, `/api/today`, and `/api/check/{word}`. To load a playable local puzzle, configure the R2 binding and seed a daily ranking using [CloudflareSetup.md](CloudflareSetup.md).
 
-### Cloudflare deployment
+## Deploy
 
-After adding the Cloudflare deployment secrets and creating the private R2
-bucket, pushes to `master` deploy the frontend and Worker through GitHub Actions.
-A second scheduled workflow precomputes tomorrow's daily ranking and publishes
-it to R2. Follow [CloudflareSetup.md](CloudflareSetup.md) for the one-time setup
-and first-puzzle bootstrap.
+Pushes to `master` that change the frontend, Worker, deployment config, or deploy workflow build the frontend and deploy it with Wrangler. The scheduled ranking workflow prepares the next UTC puzzle and publishes it to the private R2 bucket.
 
-## 🎯 Roadmap
+See [CloudflareSetup.md](CloudflareSetup.md) for the required GitHub Actions secrets, R2 setup, first-puzzle bootstrap, and deployment details. The live workers.dev address is shown for the `contextai` Worker in the Cloudflare dashboard under **Workers & Pages → contextai → Settings → Domains & Routes**.
 
-- ✅ **Basic UI & Word Guessing**
-- ✅ **Leaderboard with similarity ranking**
-- 🚧 **Daily Challenge Mode** (In progress)
-- 🔜 **Multiplayer & Themed Rounds**
-- 🔜 **Mobile App Version (APK)**
-- 🔜 **Optimized Hosting on VPS**
+## Repository layout
 
-## 📌 Contributing
+```text
+frontend/                 React game and static assets
+worker/index.js           Daily puzzle and guess API
+src/                      Ranking generation and game data logic
+data/                     Source word data
+.github/workflows/        Cloudflare deploy and daily ranking jobs
+wrangler.jsonc             Worker, static assets, and R2 binding
+CloudflareSetup.md         Cloudflare and GitHub Actions setup
+```
 
-Feel free to **fork**, submit **PRs**, and contribute! Open an **issue** if you find any bugs or want to suggest features.
+## Roadmap
 
-## 📄 License
+- Puzzle archive and cross-device progress
+- More ways to explore semantic relationships
+- Multiplayer and themed rounds
 
-MIT License - Free to use and modify.
+## License
 
----
-
-💡 **Want to play?** Visit the [Live Demo](https://contextai.vercel.app/)
+MIT

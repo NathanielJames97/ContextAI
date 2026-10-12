@@ -4,22 +4,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()  # ✅ Only one instance of FastAPI
 
-# ✅ Allow requests from Vercel frontend and local development
+# Allow requests from the legacy API clients and local development.
 origins = [
     "http://localhost:5173",  # Local development
     "http://35.179.97.80",  # Your AWS server IP
     "http://35.179.97.80:5173",  # Dev frontend running on Vite
     "https://contextai-production-8a5a.up.railway.app",  # Your backend API
-    "https://context-ai-beta.vercel.app",  # Vercel frontend
-    "https://context-ai-git-dev-storage-localdates-s-projects.vercel.app",
     "http://35.179.97.80:3000",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  # ✅ Allow only specific domains
-    allow_origin_regex=r"https://context-ai-.*\.vercel\.app",  # ✅ Allows any subdomain on Vercel
-
     allow_credentials=True,
     allow_methods=["*"],  # ✅ Allow all HTTP methods
     allow_headers=["*"],  # ✅ Allow all headers
