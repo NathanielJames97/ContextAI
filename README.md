@@ -15,10 +15,10 @@ The game currently includes daily puzzles, ranked guess history, on-device play 
 ## Tech stack
 
 - **Frontend:** React, Framer Motion, and Tailwind CSS
-- **Build tool:** Vite builds the static frontend bundle in GitHub Actions
+- **Build tool:** Vite builds the static frontend bundle
 - **Live hosting and API:** Cloudflare Workers Static Assets
 - **Daily rankings:** Private Cloudflare R2 bucket
-- **Puzzle generation:** Scheduled GitHub Actions workflow
+- **Puzzle generation:** Generated locally and published to Cloudflare R2
 
 The Worker returns the date and the result of an individual guess. The private ranking map and answer are not sent to the browser.
 
@@ -34,9 +34,17 @@ The Worker exposes `/api/health`, `/api/today`, and `/api/check/{word}`. To load
 
 ## Deploy
 
-Pushes to `master` that change the frontend, Worker, deployment config, or deploy workflow build the frontend and deploy it with Wrangler. The scheduled ranking workflow prepares the next UTC puzzle and publishes it to the private R2 bucket.
+Build and deploy from the repository root with Wrangler:
 
-See [CloudflareSetup.md](CloudflareSetup.md) for the required GitHub Actions secrets, R2 setup, first-puzzle bootstrap, and deployment details. The live workers.dev address is shown for the `contextai` Worker in the Cloudflare dashboard under **Workers & Pages → contextai → Settings → Domains & Routes**.
+```sh
+npm ci --prefix frontend
+npm run build --prefix frontend
+npx --yes wrangler@4 deploy --config wrangler.jsonc
+```
+
+Daily rankings are generated locally and uploaded to the private R2 bucket. See [CloudflareSetup.md](CloudflareSetup.md) for the commands and required credentials.
+
+See [CloudflareSetup.md](CloudflareSetup.md) for R2 setup, first-puzzle bootstrap, and deployment details. The live workers.dev address is shown for the `contextai` Worker in the Cloudflare dashboard under **Workers & Pages → contextai → Settings → Domains & Routes**.
 
 ## Repository layout
 
@@ -45,9 +53,8 @@ frontend/                 React game and static assets
 worker/index.js           Daily puzzle and guess API
 src/                      Ranking generation and game data logic
 data/                     Source word data
-.github/workflows/        Cloudflare deploy and daily ranking jobs
 wrangler.jsonc             Worker, static assets, and R2 binding
-CloudflareSetup.md         Cloudflare and GitHub Actions setup
+CloudflareSetup.md         Cloudflare deployment and ranking setup
 ```
 
 ## Roadmap

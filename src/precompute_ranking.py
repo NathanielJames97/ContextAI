@@ -114,7 +114,7 @@ def main() -> None:
         temporary_path = Path(temporary.name)
 
     temporary_path.replace(output_path)
-    # Never print the answer: GitHub Actions logs can be visible to repository readers.
+    # Never print the answer: execution logs may be visible to other people.
     print(
         f"Created ranking for {args.target_date.isoformat()} "
         f"({len(rankings)} ranked words; {len(answer_bank)} eligible answers)"
