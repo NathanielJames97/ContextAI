@@ -32,6 +32,7 @@ jobs:
       CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
       CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       CF_R2_BUCKET: ${{ vars.CF_R2_BUCKET || 'contextai-rankings' }}
+      DAILY_WORD_SEED: ${{ secrets.DAILY_WORD_SEED }}
       AWS_DEFAULT_REGION: auto
     steps:
       - uses: actions/checkout@v4
@@ -41,8 +42,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "$CF_ACCOUNT_ID" || -z "$CF_R2_ACCESS_KEY_ID" || -z "$CF_R2_SECRET_ACCESS_KEY" ]]; then
-            echo "Configure CF_ACCOUNT_ID, CF_R2_ACCESS_KEY_ID, and CF_R2_SECRET_ACCESS_KEY in repository Actions secrets." >&2
+          if [[ -z "$CF_ACCOUNT_ID" || -z "$CF_R2_ACCESS_KEY_ID" || -z "$CF_R2_SECRET_ACCESS_KEY" || -z "$DAILY_WORD_SEED" ]]; then
+            echo "Configure CF_ACCOUNT_ID, CF_R2_ACCESS_KEY_ID, CF_R2_SECRET_ACCESS_KEY, and DAILY_WORD_SEED in repository Actions secrets." >&2
             exit 1
           fi
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
