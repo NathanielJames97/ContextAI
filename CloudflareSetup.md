@@ -30,9 +30,10 @@ npx wrangler deploy --config wrangler.jsonc
 ```
 
 The build token is managed by Cloudflare. Do not put Cloudflare credentials in
-the repository. The build produces `frontend/dist`, which Wrangler deploys as
-Worker static assets. Ranking objects remain in R2 across frontend and Worker
-deployments.
+the repository. The build produces `frontend/dist` for frontend validation. The deploy script
+uploads the Worker module and preserves the currently published static UI assets
+and the private R2 ranking objects. This keeps the live interface intact while
+the recovered frontend source is reconciled with the deployed UI.
 
 ## Local checks
 
