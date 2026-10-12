@@ -35,7 +35,7 @@ function App() {
 
     try {
       const res = await axios.get(
-        `https://contextai-production-8a5a.up.railway.app/check/${guess}`
+        `/api/check/${encodeURIComponent(guess.trim())}`
       );
       setResponse(res.data);
 
