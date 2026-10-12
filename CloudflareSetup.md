@@ -5,20 +5,36 @@ the next UTC day's ranking with the existing FastText model, then uploads it to
 a private Cloudflare R2 bucket. The Worker serves only the date and the result
 for a submitted guess; it never returns the ranking map or secret word.
 
-## One-time Cloudflare setup
+## Cloudflare resources
 
-1. Create a private R2 bucket named `contextai-rankings` (or set the
-   `CF_R2_BUCKET` repository variable to a different name).
-2. Create an R2 API token with **Object Read & Write** access to that bucket.
-3. Add these repository Actions secrets:
+The private R2 bucket `contextai-rankings` has already been created in the
+Cloudflare account. It is in the Western Europe location and uses the Standard
+storage class. Its public `r2.dev` domain is disabled. Keep the bucket private.
+
+The Worker in `wrangler.jsonc` binds to this bucket as `RANKINGS`. If you
+rename the bucket, update the Worker binding and the `CF_R2_BUCKET` Actions
+variable together.
+
+## One-time GitHub Actions setup
+
+1. Create an R2 API token with **Object Read & Write** access limited to the
+   `contextai-rankings` bucket.
+2. Add these repository Actions secrets:
    - `CF_ACCOUNT_ID`
    - `CF_R2_ACCESS_KEY_ID`
    - `CF_R2_SECRET_ACCESS_KEY`
-   - `DAILY_WORD_SEED` — generate with `python -c 'import secrets; print(secrets.token_urlsafe(48))'` and store the output as a private random value. Keep it unchanged so the answer order remains stable.
-4. Bind the same bucket to the Worker in `wrangler.jsonc`.
-5. Create a Cloudflare API token with Workers Scripts:Edit and account Workers
-   Routes:Edit permissions; use it with `CLOUDFLARE_API_TOKEN` and
-   `CLOUDFLARE_ACCOUNT_ID` when deploying the Worker.
+   - `DAILY_WORD_SEED` — generate with
+     `python -c 'import secrets; print(secrets.token_urlsafe(48))'` and store
+     the output as a private random value. Keep it unchanged so the answer
+     order remains stable.
+3. For Worker deployment, create an account API token using Cloudflare's
+   **Edit Cloudflare Workers** permission policy and scope it to this account.
+   Add it to repository Actions secrets as `CLOUDFLARE_API_TOKEN` and add
+   `CLOUDFLARE_ACCOUNT_ID` as a secret too. No zone route permission is
+   needed for the current workers.dev deployment; add it only if a custom
+   route or domain is configured later.
+4. Optionally set the repository Actions variable `CF_R2_BUCKET` to
+   `contextai-rankings`; the workflow uses that name by default.
 
 Do not make the R2 bucket public. The browser should only use
 `/api/check/{word}`.
