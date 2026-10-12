@@ -6,10 +6,13 @@ const token = process.env.RANKING_EXPORT_TOKEN;
 if (!token) throw new Error("RANKING_EXPORT_TOKEN build secret is required");
 
 const source = await readFile("worker/index.js", "utf8");
-const manifest = source.match(/var manifest_default = \{ version: ("(?:\\\\.|[^"])*"), anchor: ("(?:\\\\.|[^"])*"), count: (\\d+), vocabulary: (\\[[\\s\\S]*?\\]), model:/);
-if (!manifest) throw new Error("Could not read the ranking manifest from worker/index.js");
-const answerCount = Number(manifest[3]);
-const guessCount = JSON.parse(manifest[4]).length;
+const manifestLine = source.split("\n").find((line) => line.startsWith("var manifest_default = "));
+if (!manifestLine) throw new Error("Could not read the ranking manifest from worker/index.js");
+const answerCount = Number(manifestLine.match(/count: (\d+), vocabulary:/)?.[1]);
+const vocabularyStart = manifestLine.indexOf("vocabulary: [") + "vocabulary: ".length;
+const vocabularyEnd = manifestLine.indexOf("], model:", vocabularyStart) + 1;
+const guessCount = JSON.parse(manifestLine.slice(vocabularyStart, vocabularyEnd)).length;
+if (!Number.isInteger(answerCount) || !guessCount) throw new Error("Invalid ranking manifest counts");
 const outputRoot = resolve("frontend/dist");
 const seen = new Set();
 
