@@ -13,6 +13,7 @@ function App() {
   const [puzzleDate, setPuzzleDate] = useState(null);
   const [puzzleReady, setPuzzleReady] = useState(false);
   const leaderboardRef = useRef(null);
+  const guessInputRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -62,6 +63,8 @@ function App() {
     setLoading(true);
     setGuessCount((prev) => prev + 1);
 
+    let solved = false;
+
     try {
       const res = await axios.get(
         `/api/check/${encodeURIComponent(guess.trim())}`
@@ -75,6 +78,7 @@ function App() {
       }
 
       if (res.data.status === "correct") {
+        solved = true;
         setGameOver(true);
       }
     } catch (error) {
@@ -84,6 +88,9 @@ function App() {
 
     setGuess("");
     setLoading(false);
+
+    // Keep the next guess ready without requiring another click.
+    if (!solved) setTimeout(() => guessInputRef.current?.focus(), 0);
   };
 
   const startNewGame = () => {
@@ -150,6 +157,7 @@ function App() {
       {/* Input & Submit Button */}
       <div className="bg-gray-900 p-8 rounded-lg shadow-lg max-w-lg text-center space-y-4">
         <motion.input
+          ref={guessInputRef}
           type="text"
           value={guess}
           onChange={(e) => setGuess(e.target.value)}
