@@ -34,15 +34,13 @@ The Worker exposes `/api/health`, `/api/today`, and `/api/check/{word}`. To load
 
 ## Deploy
 
-Build and deploy from the repository root with Wrangler:
+Build and deploy from the repository root with the verified Cloudflare deploy script:
 
 ```sh
-npm ci --prefix frontend
-npm run build --prefix frontend
-npx --yes wrangler@4 deploy --config wrangler.jsonc
+node scripts/deploy-cloudflare.mjs
 ```
 
-Daily rankings are generated locally and uploaded to the private R2 bucket. See [CloudflareSetup.md](CloudflareSetup.md) for the commands and required credentials.
+The 1,844 daily rankings are held in private R2 binary objects and selected by the Worker's manifest. See [CloudflareSetup.md](CloudflareSetup.md) for the data format and deployment safeguards.
 
 See [CloudflareSetup.md](CloudflareSetup.md) for R2 setup, first-puzzle bootstrap, and deployment details. The live workers.dev address is shown for the `contextai` Worker in the Cloudflare dashboard under **Workers & Pages → contextai → Settings → Domains & Routes**.
 

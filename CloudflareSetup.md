@@ -1,71 +1,51 @@
-# Daily ranking automation and Cloudflare runtime
+# Cloudflare runtime and deployment
 
-The frontend is built locally and hosted with the Worker as Cloudflare Workers
-Static Assets. Generate each UTC day's ranking locally with the existing
-FastText model, then upload it to the private Cloudflare R2 bucket. The Worker
-serves only the date and the result for a submitted guess; it never returns the
-ranking map or secret word.
+## Live resources and data format
 
-## Cloudflare resources
+- Worker: `contextai`
+- Static assets binding: `ASSETS`
+- Private R2 binding: `RANKINGS` → `contextai-rankings`
+- Wrangler configuration: `wrangler.jsonc`
 
-The private R2 bucket `contextai-rankings` has already been created in the
-Cloudflare account. It is in the Western Europe location and uses the Standard
-storage class. Its public `r2.dev` domain is disabled. Keep the bucket private.
+The R2 bucket contains 1,844 binary ranking objects named
+`rankings/0000.bin` through `rankings/1843.bin`. Each file stores one 16-bit
+rank per word in `worker/manifest.json`. The manifest's `anchor`, `count`, and
+`version` select the correct object for each UTC day. Keep the R2 bucket private.
 
-The Worker in `wrangler.jsonc` binds to this bucket as `RANKINGS`. If you
-rename the bucket, update the Worker binding and the commands below.
+Do not replace these objects with per-date JSON files or publish them as static
+assets. The Worker reads them through the private `RANKINGS` binding, validates
+the expected byte length, and returns only the submitted guess's rank.
 
-## Local credentials
+## Deploy
 
-Wrangler must be authenticated to the Cloudflare account for deployment and
-R2 uploads. Ranking generation also needs a stable private `DAILY_WORD_SEED`.
-Generate one once with:
-
-```sh
-python -c "import secrets; print(secrets.token_urlsafe(48))"
-```
-
-Store it in a local environment variable or a private environment file that is
-excluded from Git. Keep the same seed so the answer order remains stable.
-
-Do not make the R2 bucket public. The browser should only use
-`/api/check/{word}`.
-
-## Daily answer and ranking generation
-
-Generate and upload tomorrow's UTC puzzle before the daily reset. To seed the
-first puzzle, use today's UTC date. Replacing an already published ranking
-changes that day's answer and should be done only intentionally.
+Authenticate Wrangler to the Cloudflare account that owns `contextai`, then
+deploy from the repository root:
 
 ```sh
-python -m pip install -r requirements-ranking.txt
-python src/precompute_ranking.py --target-date YYYY-MM-DD
-npx --yes wrangler@4 r2 object put contextai-rankings/rankings/YYYY-MM-DD.json --file data/daily/YYYY-MM-DD.json --content-type application/json --remote
+node scripts/deploy-cloudflare.mjs
 ```
 
-Replace each `YYYY-MM-DD` with the same target date. The generator does not
-print the answer. Keep the generated ranking file private; it contains every
-word's rank and reveals the answer.
+This builds the frontend, records the active Worker version, deploys the
+Worker and static assets, and checks `/api/health`, `/api/today`, and a known
+guess. If a live check fails, it rolls back to the previously active Worker
+version and its static assets. Keep the Node runtime current enough for
+Wrangler 4.
 
-Answers come from the existing guess vocabulary, restricted to single-token
-ASCII English words of 4–12 letters with a word-frequency score of at least 3.
-A private seed chooses a pseudo-random answer order; consecutive dates use
-different answers until the eligible list cycles. The current ten-entry
-`data/word_list.txt` is retained as legacy data and no longer limits the
-daily answer pool. The frequency source is pinned to wordfreq 3.1.1. Its
-frequency data includes SUBTLEX lists by Marc Brysbaert and colleagues; retain
-that attribution if redistributing the frequency data.
+Never store Cloudflare credentials in the repository. Wrangler's local login
+or a secure Cloudflare build connection should provide deployment access.
 
-## Deploy and check
-
-From the repository root:
+## Local development
 
 ```sh
-npm --prefix frontend ci
-npm --prefix frontend run build
-npx --yes wrangler@4 deploy --config wrangler.jsonc
+npm ci --prefix frontend
+npm run build --prefix frontend
+npx --yes wrangler@4 dev --config wrangler.jsonc
 ```
 
-The Worker reads UTC date keys in R2 named
-`rankings/YYYY-MM-DD.json`. Check the health route at `/api/health`, the
-date route at `/api/today`, and a guess with `/api/check/example`.
+Wrangler's local R2 storage is separate from production. To play against the
+live rankings locally, configure a remote R2 binding in a local-only override;
+do not commit account credentials or change the production binding.
+
+The public API routes are `/api/health`, `/api/today`, and
+`/api/check/{word}`. The `/api/today` route checks that the day's R2 object
+exists and has the expected size before marking the puzzle ready.

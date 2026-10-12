@@ -4,26 +4,21 @@
 
 ```sh
 npm ci --prefix frontend
-npm run dev --prefix frontend
+npm run build --prefix frontend
 npx --yes wrangler@4 dev --config wrangler.jsonc
 ```
 
-Wrangler runs the Worker and serves the frontend assets. The local Worker
-needs access to the `RANKINGS` R2 binding and a ranking for the current UTC
-date to provide a playable puzzle.
+Wrangler serves the frontend and Worker API. Local R2 storage is separate from
+production; the live daily ranking is stored in the private Cloudflare bucket.
 
 ## Deploy to Cloudflare
 
-Authenticate Wrangler with the Cloudflare account that owns the `contextai`
-Worker, then run:
+Authenticate Wrangler with the account that owns the `contextai` Worker, then
+run this from the repository root:
 
 ```sh
-npm ci --prefix frontend
-npm run build --prefix frontend
-npx --yes wrangler@4 deploy --config wrangler.jsonc
+node scripts/deploy-cloudflare.mjs
 ```
 
-## Publish a daily puzzle
-
-Follow [CloudflareSetup.md](CloudflareSetup.md) to generate and upload the
-ranking JSON for the target UTC date. Keep that generated file private.
+The deploy script builds the frontend, deploys through Wrangler, verifies the
+live game endpoints, and rolls back if the puzzle or guess check fails.
