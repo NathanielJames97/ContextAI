@@ -45,8 +45,15 @@
 .game-layout {
   position: relative;
   z-index: 1;
-  width: min(100%, 780px);
+  width: min(100%, 1180px);
   margin: 0 auto;
+}
+
+.play-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(350px, 0.8fr);
+  align-items: start;
+  gap: 16px;
 }
 
 .brand-row,
@@ -604,7 +611,17 @@
 }
 
 .guesses-section {
-  padding: 0 7px;
+  position: sticky;
+  top: 18px;
+  display: flex;
+  max-height: calc(100vh - 36px);
+  flex-direction: column;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: linear-gradient(155deg, rgba(22, 30, 52, 0.96), rgba(14, 19, 35, 0.96));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
 }
 
 .section-heading {
@@ -662,16 +679,20 @@
   display: grid;
   gap: 7px;
   margin: 0;
-  padding: 0;
+  padding: 0 4px 0 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(177, 194, 231, 0.35) transparent;
+  scrollbar-width: thin;
   list-style: none;
 }
 
 .guess-row {
   display: grid;
-  grid-template-columns: 31px minmax(82px, 1.1fr) minmax(50px, 1fr) 54px 106px;
-  gap: 11px;
+  grid-template-columns: 25px minmax(68px, 1fr) minmax(42px, 0.8fr) 48px 74px;
+  gap: 8px;
   min-height: 51px;
-  padding: 9px 12px;
+  padding: 9px 10px;
   border: 1px solid rgba(177, 194, 231, 0.1);
   border-radius: 11px;
   background: rgba(18, 25, 44, 0.66);
@@ -750,6 +771,13 @@
   clip-path: inset(50%);
 }
 
+@media (max-width: 960px) {
+  .game-layout { width: min(100%, 780px); }
+  .play-layout { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .guesses-section { position: static; max-height: none; padding: 20px; }
+  .guess-list { max-height: 58vh; }
+}
+
 @media (max-width: 640px) {
   .app-shell { padding: 20px 14px 24px; }
   .brand-row { margin-bottom: 18px; }
@@ -776,7 +804,7 @@
   .leaderboard-rule { max-width: 110px; text-align: right; }
   .leaderboard-row { grid-template-columns: 35px minmax(0, 1fr) 60px 39px; gap: 6px; padding: 10px 8px; font-size: 10px; }
   .leaderboard-time { font-size: 9px; }
-  .guesses-section { padding: 0; }
+  .guesses-section { padding: 18px; }
   .guess-row { grid-template-columns: 24px minmax(68px, 1fr) 48px 50px; gap: 8px; padding: 9px; }
   .rank-track { grid-column: 2 / 4; grid-row: 2; }
   .rank-value { grid-column: 4; grid-row: 1; }

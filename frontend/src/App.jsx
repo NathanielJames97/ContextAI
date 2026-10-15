@@ -368,6 +368,7 @@ function App() {
           </a>
         </header>
 
+        <div className="play-layout">
         <section className="hero-card" aria-labelledby="game-title">
           <div className="hero-copy">
             <p className="eyebrow">{formattedDate}</p>
@@ -468,6 +469,45 @@ function App() {
           </div>
         </section>
 
+        <section className="guesses-section" aria-labelledby="guesses-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">SEMANTIC TRAIL</p>
+              <h2 id="guesses-title">Your guesses</h2>
+            </div>
+            <span className="guess-total">{guesses.length} {guesses.length === 1 ? "word" : "words"}</span>
+          </div>
+
+          {guesses.length === 0 ? (
+            <div className="empty-trail">
+              <span aria-hidden="true">✳</span>
+              <strong>Your trail starts with one word.</strong>
+              <p>Try something broad, then follow the closest meanings.</p>
+            </div>
+          ) : (
+            <ol className="guess-list" aria-label="Guesses ordered from closest to furthest">
+              {visibleGuesses.map((entry, index) => (
+                <li className="guess-row" key={`${entry.word}-${entry.rank}`}>
+                  <span className="guess-position">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="guess-word">{entry.word}</span>
+                  <div className="rank-track" aria-hidden="true">
+                    <span className={`rank-meter ${rankColor(entry.rank)}`} style={{ width: `${entry.rank <= 10 ? 94 : entry.rank <= 100 ? 76 : entry.rank <= 1000 ? 54 : 30}%` }} />
+                  </div>
+                  <span className="rank-value">#{entry.rank}</span>
+                  <span className="rank-description">{rankLabel(entry.rank)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+
+          {guesses.length > displayedGuesses && (
+            <button className="button button--quiet show-more" type="button" onClick={() => setDisplayedGuesses((count) => count + 10)}>
+              Show more guesses
+            </button>
+          )}
+        </section>
+        </div>
+
         <section className="stats-strip" aria-label="Your progress on this device">
           <div><strong>{streakSummary.current}</strong><span>day streak</span></div>
           <div><strong>{streakSummary.best}</strong><span>best streak</span></div>
@@ -546,44 +586,6 @@ function App() {
             <p className="leaderboard-empty">This solve was not recorded by today’s leaderboard.</p>
           )}
           {leaderboardMessage && <p className="leaderboard-message" role="status">{leaderboardMessage}</p>}
-        </section>
-
-        <section className="guesses-section" aria-labelledby="guesses-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">SEMANTIC TRAIL</p>
-              <h2 id="guesses-title">Your guesses</h2>
-            </div>
-            <span className="guess-total">{guesses.length} {guesses.length === 1 ? "word" : "words"}</span>
-          </div>
-
-          {guesses.length === 0 ? (
-            <div className="empty-trail">
-              <span aria-hidden="true">✳</span>
-              <strong>Your trail starts with one word.</strong>
-              <p>Try something broad, then follow the closest meanings.</p>
-            </div>
-          ) : (
-            <ol className="guess-list" aria-label="Guesses ordered from closest to furthest">
-              {visibleGuesses.map((entry, index) => (
-                <li className="guess-row" key={`${entry.word}-${entry.rank}`}>
-                  <span className="guess-position">{String(index + 1).padStart(2, "0")}</span>
-                  <span className="guess-word">{entry.word}</span>
-                  <div className="rank-track" aria-hidden="true">
-                    <span className={`rank-meter ${rankColor(entry.rank)}`} style={{ width: `${entry.rank <= 10 ? 94 : entry.rank <= 100 ? 76 : entry.rank <= 1000 ? 54 : 30}%` }} />
-                  </div>
-                  <span className="rank-value">#{entry.rank}</span>
-                  <span className="rank-description">{rankLabel(entry.rank)}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-
-          {guesses.length > displayedGuesses && (
-            <button className="button button--quiet show-more" type="button" onClick={() => setDisplayedGuesses((count) => count + 10)}>
-              Show more guesses
-            </button>
-          )}
         </section>
 
         <footer className="footer-note">
